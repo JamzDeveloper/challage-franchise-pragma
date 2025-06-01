@@ -37,3 +37,8 @@ variable "db_name" {
 variable "vpc_id" {
   description = "VPC ID where RDS will be deployed"
 }
+
+variable "db_host" {
+  description = "host db"
+
+}

@@ -1,0 +1,33 @@
+"use strict";
+// src/handlers/addBranch/index.ts
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.handler = void 0;
+const db_franchise_repository_js_1 = require("../../infrastructure/driven-adapters/db-franchise.repository.js");
+const mysql_connection_js_1 = require("../../infrastructure/db/mysql-connection.js");
+const addBranch_js_1 = require("../../application/use-cases/addBranch.js");
+const validateAddBranchDto_js_1 = require("./validateAddBranchDto.js");
+const franchiseRepo = new db_franchise_repository_js_1.DbFranchiseRepository(mysql_connection_js_1.pool);
+const addBranchUseCase = new addBranch_js_1.AddBranchUseCase(franchiseRepo);
+const handler = async (event) => {
+    try {
+        const body = event.body ? JSON.parse(event.body) : {};
+        const validated = validateAddBranchDto_js_1.createBranchSchema.parse(body);
+        await addBranchUseCase.execute(validated.franchiseId, {
+            id: crypto.randomUUID(),
+            name: validated.name,
+            address: validated.address,
+        });
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: "Branch added successfully" }),
+        };
+    }
+    catch (err) {
+        console.error("Error adding branch", err);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: "Internal server error" }),
+        };
+    }
+};
+exports.handler = handler;

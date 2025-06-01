@@ -5,7 +5,7 @@ provider "aws" {
 # ZIP automático
 data "archive_file" "lambda_zip_file" {
   type        = "zip"
-  source_dir  = "${path.module}/../dist"
+  source_dir  = "${path.module}/../lambda_build"
   output_path = "${path.module}/../function.zip"
 }
 
@@ -41,6 +41,15 @@ resource "aws_lambda_function" "create_franchise" {
 
   filename         = data.archive_file.lambda_zip_file.output_path
   source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
+
+  environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USERNAME = var.db_username
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
 }
 
 

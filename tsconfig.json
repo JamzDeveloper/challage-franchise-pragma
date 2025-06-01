@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // Versión de JS a generar
+    "module": "CommonJS", // Sistema de módulos compatible con Node.js
+    "moduleResolution": "node", // Cómo buscar módulos
+    "outDir": "./dist", // Carpeta donde va el código compilado
+    "rootDir": "./src", // Carpeta origen del código TS
+    "strict": true, // Activar todas las comprobaciones estrictas
+    "esModuleInterop": true, // Para importar módulos CommonJS correctamente
+    "forceConsistentCasingInFileNames": true, // Evita problemas de mayúsculas/minúsculas en importaciones
+    "skipLibCheck": true // Salta la comprobación de tipos en libs para acelerar compilación
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -14,12 +14,14 @@ export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   try {
-    const body = event.body ? JSON.parse(event.body) : {};
+const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
 
+    console.log("bodyy 19",body)
     const validatedData = createFranchiseSchema.parse(body);
 
     const franchise = await createFranchiseUseCase.execute(validatedData);
 
+    console.log("franchise 24",franchise)
     return {
       statusCode: 201,
       body: JSON.stringify(franchise),

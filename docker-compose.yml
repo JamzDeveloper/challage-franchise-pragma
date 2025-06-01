@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-franchise
+    restart: unless-stopped
+    environment:
+      PMA_HOST: franchise-mysql-db.cklum2wq42ma.us-east-1.rds.amazonaws.com
+      PMA_PORT: 3306
+      PMA_USER: terraform_username
+      PMA_PASSWORD: terraform_password
+    ports:
+      - "8080:80"

@@ -1,0 +1,7 @@
+aws_region           = "us-east-1"
+lambda_function_name = "create-franchise"
+bucket_name          = "franchise-lambdas-bucket"
+db_username          = "terraform_username"
+db_password          =  "terraform_password"
+db_name              =  "terraform_franchise"
+vpc_id               =  "vpc-09a6ab315b838ad6e"

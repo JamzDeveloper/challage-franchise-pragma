@@ -16,13 +16,14 @@ export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
   try {
-    const body = event.body ? JSON.parse(event.body) : {};
+    const body =
+      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
     const validated = createBranchSchema.parse(body);
 
     await addBranchUseCase.execute(validated.franchiseId, {
-      id: crypto.randomUUID(),
       name: validated.name,
       address: validated.address,
+      phone: validated.phone,
     });
 
     return {

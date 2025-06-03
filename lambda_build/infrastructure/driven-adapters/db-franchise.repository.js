@@ -29,14 +29,22 @@ class DbFranchiseRepository {
         return store.get(id) ?? null;
     }
     async addBranch(franchiseId, branch) {
-        const franchise = store.get(franchiseId);
-        if (!franchise) {
-            throw new Error("Franchise not found");
+        // Validar que exista la franquicia
+        const [franchiseRows] = await this.pool.query(`SELECT id FROM franchises WHERE id = ?`, [franchiseId]);
+        if (franchiseRows.length === 0) {
+            throw new Error(`Franchise with ID ${franchiseId} not found.`);
         }
-        // Agregar sucursal a la franquicia
-        franchise.branches.push(branch);
-        // Guardar cambios
-        store.set(franchiseId, franchise);
+        // Insertar la sucursal
+        const query = `
+    INSERT INTO branches (franchise_id, name, address, phone)
+    VALUES (?, ?, ?, ?)
+  `;
+        await this.pool.query(query, [
+            franchiseId,
+            branch.name,
+            branch.address,
+            branch.phone,
+        ]);
     }
     async find() {
         const query = `SELECT * FROM franchises`;

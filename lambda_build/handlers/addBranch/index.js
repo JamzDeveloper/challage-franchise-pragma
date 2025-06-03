@@ -10,12 +10,12 @@ const franchiseRepo = new db_franchise_repository_js_1.DbFranchiseRepository(mys
 const addBranchUseCase = new addBranch_js_1.AddBranchUseCase(franchiseRepo);
 const handler = async (event) => {
     try {
-        const body = event.body ? JSON.parse(event.body) : {};
+        const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
         const validated = validateAddBranchDto_js_1.createBranchSchema.parse(body);
         await addBranchUseCase.execute(validated.franchiseId, {
-            id: crypto.randomUUID(),
             name: validated.name,
             address: validated.address,
+            phone: validated.phone,
         });
         return {
             statusCode: 201,

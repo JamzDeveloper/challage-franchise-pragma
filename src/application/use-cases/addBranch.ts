@@ -3,10 +3,15 @@
 import { FranchiseRepository } from "../../domain/repositories/franchise.repository.js";
 import { Branch } from "../../domain/entities/branch.js";
 
+interface CreateBranchInput {
+  name:string;
+  address:string;
+  phone:string
+}
 export class AddBranchUseCase {
   constructor(private franchiseRepo: FranchiseRepository) {}
 
-  async execute(franchiseId: string, branch: Branch): Promise<void> {
+  async execute(franchiseId: number, branch: CreateBranchInput): Promise<void> {
     return this.franchiseRepo.addBranch(franchiseId, branch);
   }
 }

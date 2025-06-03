@@ -38,5 +38,10 @@ class DbFranchiseRepository {
         // Guardar cambios
         store.set(franchiseId, franchise);
     }
+    async find() {
+        const query = `SELECT * FROM franchises`;
+        const [rows] = await this.pool.query(query);
+        return rows;
+    }
 }
 exports.DbFranchiseRepository = DbFranchiseRepository;

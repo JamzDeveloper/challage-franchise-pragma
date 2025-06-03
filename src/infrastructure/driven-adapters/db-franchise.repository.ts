@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import mysql, { RowDataPacket } from "mysql2/promise";
 import { Branch } from "../../domain/entities/branch";
 import { Franchise } from "../../domain/entities/franchise";
 import { FranchiseRepository } from "../../domain/repositories/franchise.repository";
@@ -43,5 +43,11 @@ export class DbFranchiseRepository implements FranchiseRepository {
     franchise.branches.push(branch);
     // Guardar cambios
     store.set(franchiseId, franchise);
+  }
+  async find(): Promise<Array<Franchise>> {
+    const query = `SELECT * FROM franchises`;
+    const [rows] = await this.pool.query<RowDataPacket[]>(query);
+
+    return rows as Franchise[];
   }
 }

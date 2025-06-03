@@ -65,6 +65,29 @@ resource "aws_lambda_function" "add_branch" {
   source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
 }
 
+# Lambda function all franchises resource
+
+resource "aws_lambda_function" "all_franchises" {
+  function_name = "all_franchises_lambda"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "handlers/allFranchises/index.handler" 
+  runtime       = "nodejs20.x"
+  timeout       = 10
+
+  filename         = data.archive_file.lambda_zip_file.output_path
+  source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
+
+  environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USERNAME = var.db_username
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
+}
+
+##
 # REST API Gateway
 resource "aws_api_gateway_rest_api" "franchise_api" {
   name        = "franchise-api"
@@ -150,14 +173,64 @@ resource "aws_lambda_permission" "allow_apigw_add_branch" {
   source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
 }
 
+## lambda allFranchises
+
+resource "aws_api_gateway_method" "get_franchises" {
+  rest_api_id   = aws_api_gateway_rest_api.franchise_api.id
+  resource_id   = aws_api_gateway_resource.franchises.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda_get_franchises" {
+  rest_api_id             = aws_api_gateway_rest_api.franchise_api.id
+  resource_id             = aws_api_gateway_resource.franchises.id
+  http_method             = aws_api_gateway_method.get_franchises.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.all_franchises.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigw_get_franchises" {
+  statement_id  = "AllowAPIGatewayInvokeGetFranchises"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.all_franchises.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
+}
+
+
 # Deployment and stage
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
+    # aws_api_gateway_integration.lambda_post_franchises,
+    # aws_api_gateway_integration.lambda_post_branches,
+    # aws_api_gateway_integration.lambda_get_franchises, 
+
+    aws_api_gateway_method.post_franchises,
     aws_api_gateway_integration.lambda_post_franchises,
+
+    aws_api_gateway_method.post_branches,
     aws_api_gateway_integration.lambda_post_branches,
+
+    aws_api_gateway_method.get_franchises,
+    aws_api_gateway_integration.lambda_get_franchises,
   ]
 
   rest_api_id = aws_api_gateway_rest_api.franchise_api.id
+
+  triggers = {
+    redeployment = sha1(jsonencode({
+      methods = [
+        aws_api_gateway_method.post_franchises.http_method,
+        aws_api_gateway_method.post_branches.http_method,
+        aws_api_gateway_method.get_franchises.http_method,
+      ]
+    }))
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 

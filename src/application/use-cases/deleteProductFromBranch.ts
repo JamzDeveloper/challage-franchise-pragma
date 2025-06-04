@@ -1,5 +1,5 @@
 // src/application/use-cases/deleteProductFromBranch.ts
-import { BranchRepository } from "../../domain/repositories/bramch.repository";
+import { BranchRepository } from "../../domain/repositories/branch.repository";
 
 export class DeleteProductFromBranchUseCase {
   constructor(private branchRepository: BranchRepository) {}

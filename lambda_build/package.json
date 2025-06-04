@@ -6,6 +6,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "migration": "node scripts/migration.js",
     "build": "tsc",
+    "build:terraform":"tsc && cp -r dist/* lambda_build/ && npm i --production && cp -r node_modules lambda_build/ && cp package.json lambda_build/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { DbBranchRepository } from "../../infrastructure/driven-adapters/DbBranch.repository";
+import { DbBranchRepository } from "../../infrastructure/driven-adapters/dbBranch.repository";
 import { pool } from "../../infrastructure/db/mysql-connection";
 import { DeleteProductFromBranchUseCase } from "../../application/use-cases/deleteProductFromBranch";
 

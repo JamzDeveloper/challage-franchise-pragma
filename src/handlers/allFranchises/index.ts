@@ -4,7 +4,6 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 
 import { DbFranchiseRepository } from "../../infrastructure/driven-adapters/dbFranchise.repository.js";
 import { pool } from "../../infrastructure/db/mysql-connection.js";
-import { CreateFranchiseUseCase } from "../../application/use-cases/createFranchise.js";
 import { AllFranchisesUseCase } from "../../application/use-cases/allFranchises.js";
 
 const franchiseRepo = new DbFranchiseRepository(pool);

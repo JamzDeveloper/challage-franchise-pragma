@@ -1,5 +1,5 @@
 import { Product } from "../../domain/entities/product";
-import { BranchRepository } from "../../domain/repositories/bramch.repository";
+import { BranchRepository } from "../../domain/repositories/branch.repository";
 
 export class AddProductToBranchUseCase {
   constructor(private branchRepository: BranchRepository) {}

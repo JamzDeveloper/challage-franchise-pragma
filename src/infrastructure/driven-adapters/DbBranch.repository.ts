@@ -1,6 +1,6 @@
 import { Pool } from "mysql2/promise";
 import { Product } from "../../domain/entities/product";
-import { BranchRepository } from "../../domain/repositories/bramch.repository";
+import { BranchRepository } from "../../domain/repositories/branch.repository";
 
 export class DbBranchRepository implements BranchRepository {
   constructor(private pool: Pool) {}
@@ -80,6 +80,21 @@ export class DbBranchRepository implements BranchRepository {
       await connection.commit();
     } catch (err) {
       await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  }
+
+  async allProductsToBranch(branchId: number): Promise<Product[]> {
+    const connection = await this.pool.getConnection();
+    try {
+      const [rows] = await connection.query(
+        "SELECT * FROM products WHERE branch_id = ?",
+        [branchId]
+      );
+      return rows as Product[];
+    } catch (err) {
       throw err;
     } finally {
       connection.release();

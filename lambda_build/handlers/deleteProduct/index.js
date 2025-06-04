@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const DbBranch_repository_1 = require("../../infrastructure/driven-adapters/DbBranch.repository");
+const dbBranch_repository_1 = require("../../infrastructure/driven-adapters/dbBranch.repository");
 const mysql_connection_1 = require("../../infrastructure/db/mysql-connection");
 const deleteProductFromBranch_1 = require("../../application/use-cases/deleteProductFromBranch");
-const branchRepo = new DbBranch_repository_1.DbBranchRepository(mysql_connection_1.pool);
+const branchRepo = new dbBranch_repository_1.DbBranchRepository(mysql_connection_1.pool);
 const deleteUseCase = new deleteProductFromBranch_1.DeleteProductFromBranchUseCase(branchRepo);
 const handler = async (event) => {
     try {

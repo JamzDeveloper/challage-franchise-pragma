@@ -60,5 +60,18 @@ class DbBranchRepository {
             connection.release();
         }
     }
+    async allProductsToBranch(branchId) {
+        const connection = await this.pool.getConnection();
+        try {
+            const [rows] = await connection.query("SELECT * FROM products WHERE branch_id = ?", [branchId]);
+            return rows;
+        }
+        catch (err) {
+            throw err;
+        }
+        finally {
+            connection.release();
+        }
+    }
 }
 exports.DbBranchRepository = DbBranchRepository;

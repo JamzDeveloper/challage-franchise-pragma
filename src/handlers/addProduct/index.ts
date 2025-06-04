@@ -1,14 +1,11 @@
 // src/handlers/addBranch/index.ts
 
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { z } from "zod";
 
-import { DbFranchiseRepository } from "../../infrastructure/driven-adapters/dbFranchise.repository.js";
 import { pool } from "../../infrastructure/db/mysql-connection.js";
-import { createBranchSchema } from "../addBranch/validateAddBranchDto.js";
 import { addProductToBranchSchema } from "./validateAddProductDto.js";
-import { AddProductToBranchUseCase } from "../../application/use-cases/addProductToBranch.js";
-import { DbBranchRepository } from "../../infrastructure/driven-adapters/DbBranch.repository.js";
+import { AddProductToBranchUseCase } from "../../application/use-cases/addProductToBranch";
+import { DbBranchRepository } from "../../infrastructure/driven-adapters/dbBranch.repository";
 
 const branchRepo = new DbBranchRepository(pool);
 const addBranchUseCase = new AddProductToBranchUseCase(branchRepo);

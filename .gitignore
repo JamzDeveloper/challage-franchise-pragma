@@ -4,3 +4,4 @@ package-lock.json
 dist
 terraform/.terraform
 lambda_build/
+*.zip

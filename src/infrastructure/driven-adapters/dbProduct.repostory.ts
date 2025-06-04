@@ -18,9 +18,9 @@ export class DbProductRepository implements ProductRepository {
 
     try {
       const updateQuery = `
-        UPDATE branch_products
+        UPDATE products
         SET stock = ?
-        WHERE branch_id = ? AND product_id = ?
+        WHERE branch_id = ? AND id = ?
       `;
 
       const [updateResult] = await connection.execute(updateQuery, [
@@ -30,10 +30,10 @@ export class DbProductRepository implements ProductRepository {
       ]);
 
       const selectQuery = `
-        SELECT p.id, p.name, bp.stock
+        SELECT * 
         FROM products p
-        JOIN branch_products bp ON p.id = bp.product_id
-        WHERE bp.branch_id = ? AND bp.product_id = ?
+        JOIN branches bp ON p.branch_id = bp.id
+        WHERE p.branch_id = ? AND p.id = ?
       `;
 
       const [rows] = await connection.execute<RowDataPacket[]>(selectQuery, [

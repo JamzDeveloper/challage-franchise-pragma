@@ -139,6 +139,30 @@ resource "aws_lambda_function" "list_product_to_branch" {
     }
   }
 }
+
+
+# Lambda function update stock product
+resource "aws_lambda_function" "update_stock_product_to_branch_lambda" {
+  function_name = "put-update-stock-product-to-branch"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "handlers/updateStockProduct/index.handler"  # Asegúrate que esta sea la ruta correcta
+  runtime       = "nodejs20.x"
+  timeout       = 10
+
+  filename         = data.archive_file.lambda_zip_file.output_path
+  source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
+
+   environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USERNAME = var.db_username
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
+}
+
+
 # Lambda function delete  branch
 resource "aws_lambda_function" "delete_product_to_branch" {
   function_name = "delete-product-to-branch"
@@ -386,7 +410,37 @@ resource "aws_lambda_permission" "allow_apigw_delete_product_to_branch" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
   }
+### config update stock product
 
+resource "aws_api_gateway_resource" "branch_product_stock" {
+  rest_api_id = aws_api_gateway_rest_api.franchise_api.id
+  parent_id   = aws_api_gateway_resource.delete_route_product_id.id
+  path_part   = "stock"
+}
+
+resource "aws_api_gateway_method" "put_branch_product_stock" {
+  rest_api_id   = aws_api_gateway_rest_api.franchise_api.id
+  resource_id   = aws_api_gateway_resource.branch_product_stock.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda_put_branch_product_stock" {
+  rest_api_id             = aws_api_gateway_rest_api.franchise_api.id
+  resource_id             = aws_api_gateway_resource.branch_product_stock.id
+  http_method             = aws_api_gateway_method.put_branch_product_stock.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.update_stock_product_to_branch_lambda.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigw_update_stock_to_branch" {
+  statement_id  = "AllowAPIGatewayInvokeUpdateStockToBranch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.update_stock_product_to_branch_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
+}
 
 
 
@@ -410,7 +464,10 @@ resource "aws_api_gateway_deployment" "deployment" {
   aws_api_gateway_integration.lambda_delete_branch_product,
 
   aws_api_gateway_method.get_branch_product,
-  aws_api_gateway_integration.lambda_get_branch_product
+  aws_api_gateway_integration.lambda_get_branch_product,
+
+  aws_api_gateway_method.put_branch_product_stock,
+  aws_api_gateway_integration.lambda_put_branch_product_stock
 
   ]
 
@@ -425,7 +482,7 @@ resource "aws_api_gateway_deployment" "deployment" {
         aws_api_gateway_method.post_branch_product.http_method,
         aws_api_gateway_method.delete_branch_product.http_method,
         aws_api_gateway_method.get_branch_product.http_method,
-
+        aws_api_gateway_method.put_branch_product_stock.http_method,
       ],
       # integrations = [
       #   aws_api_gateway_integration.lambda_post_franchises.id,
@@ -433,6 +490,7 @@ resource "aws_api_gateway_deployment" "deployment" {
       #   aws_api_gateway_integration.lambda_get_franchises.id,
       #   aws_api_gateway_integration.lambda_post_branch_product.id,
       #   aws_api_gateway_integration.lambda_delete_branch_product.id,
+      #   aws_api_gateway_integration.lambda_put_branch_product_stock.id
       # ]
     }))
   }

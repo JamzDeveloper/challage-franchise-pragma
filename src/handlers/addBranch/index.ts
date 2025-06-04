@@ -3,7 +3,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { z } from "zod";
 
-import { DbFranchiseRepository } from "../../infrastructure/driven-adapters/db-franchise.repository.js";
+import { DbFranchiseRepository } from "../../infrastructure/driven-adapters/dbFranchise.repository.js";
 import { pool } from "../../infrastructure/db/mysql-connection.js";
 import { AddBranchUseCase } from "../../application/use-cases/addBranch.js";
 

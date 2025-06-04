@@ -2,11 +2,11 @@
 // src/handlers/createFranchise.handler.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-const db_franchise_repository_js_1 = require("../../infrastructure/driven-adapters/db-franchise.repository.js");
+const dbFranchise_repository_js_1 = require("../../infrastructure/driven-adapters/dbFranchise.repository.js");
 const mysql_connection_js_1 = require("../../infrastructure/db/mysql-connection.js");
 const validateCreateFranchiseDto_js_1 = require("./validateCreateFranchiseDto.js");
 const createFranchise_js_1 = require("../../application/use-cases/createFranchise.js");
-const franchiseRepo = new db_franchise_repository_js_1.DbFranchiseRepository(mysql_connection_js_1.pool);
+const franchiseRepo = new dbFranchise_repository_js_1.DbFranchiseRepository(mysql_connection_js_1.pool);
 const createFranchiseUseCase = new createFranchise_js_1.CreateFranchiseUseCase(franchiseRepo);
 const handler = async (event) => {
     try {

@@ -119,6 +119,28 @@ resource "aws_lambda_function" "add_product_to_branch" {
   }
 }
 
+# Lambda function added  branch
+resource "aws_lambda_function" "delete_product_to_branch" {
+  function_name = "delete-product-to-branch"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "handlers/deleteProduct/index.handler"  # Asegúrate que esta sea la ruta correcta
+  runtime       = "nodejs20.x"
+  timeout       = 10
+
+  filename         = data.archive_file.lambda_zip_file.output_path
+  source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
+
+   environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USERNAME = var.db_username
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
+}
+
+
 ##
 # REST API Gateway
 resource "aws_api_gateway_rest_api" "franchise_api" {
@@ -278,13 +300,46 @@ resource "aws_lambda_permission" "allow_apigw_get_franchises" {
   source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
 }
 
+resource "aws_api_gateway_resource" "delete_route_product_id" {
+  rest_api_id = aws_api_gateway_rest_api.franchise_api.id
+  parent_id   = aws_api_gateway_resource.branch_product.id
+  path_part   = "{productId}"  # Aquí defines el parámetro path
+}
+
+
+# Método DELETE para /branch/{branchId}/product/{productId}
+resource "aws_api_gateway_method" "delete_branch_product" {
+  rest_api_id   = aws_api_gateway_rest_api.franchise_api.id
+  resource_id   = aws_api_gateway_resource.delete_route_product_id.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+}
+
+# Integración Lambda para DELETE  /branch/{branchId}/product/{productId}
+resource "aws_api_gateway_integration" "lambda_delete_branch_product" {
+  rest_api_id             = aws_api_gateway_rest_api.franchise_api.id
+  resource_id             = aws_api_gateway_resource.delete_route_product_id.id
+  http_method             = aws_api_gateway_method.delete_branch_product.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.delete_product_to_branch.invoke_arn
+}
+
+# Permiso Lambda para API Gateway
+resource "aws_lambda_permission" "allow_apigw_delete_product_to_branch" {
+ statement_id  = "AllowAPIGatewayInvokeDeleteProductToBranch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.delete_product_to_branch.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
+  }
+
+
+
 
 # Deployment and stage
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
-    # aws_api_gateway_integration.lambda_post_franchises,
-    # aws_api_gateway_integration.lambda_post_branches,
-    # aws_api_gateway_integration.lambda_get_franchises, 
 
   aws_api_gateway_method.post_franchises,
   aws_api_gateway_integration.lambda_post_franchises,
@@ -298,6 +353,9 @@ resource "aws_api_gateway_deployment" "deployment" {
   aws_api_gateway_method.post_branch_product,
   aws_api_gateway_integration.lambda_post_branch_product,
 
+  aws_api_gateway_method.delete_branch_product,
+  aws_api_gateway_integration.lambda_delete_branch_product
+
   ]
 
   rest_api_id = aws_api_gateway_rest_api.franchise_api.id
@@ -309,12 +367,15 @@ resource "aws_api_gateway_deployment" "deployment" {
         aws_api_gateway_method.post_branches.http_method,
         aws_api_gateway_method.get_franchises.http_method,
         aws_api_gateway_method.post_branch_product.http_method,
+        aws_api_gateway_method.delete_branch_product.http_method,
+
       ],
       # integrations = [
       #   aws_api_gateway_integration.lambda_post_franchises.id,
       #   aws_api_gateway_integration.lambda_post_branches.id,
       #   aws_api_gateway_integration.lambda_get_franchises.id,
       #   aws_api_gateway_integration.lambda_post_branch_product.id,
+      #   aws_api_gateway_integration.lambda_delete_branch_product.id,
       # ]
     }))
   }

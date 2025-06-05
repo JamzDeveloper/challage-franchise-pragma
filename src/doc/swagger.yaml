@@ -1,0 +1,432 @@
+swagger: "2.0"
+info:
+  description: "API REST para la gestión de franquicias, sucursales y productos, permitiendo la administración de inventario y datos de contacto."
+  version: "2025-06-05T10:14:57Z"
+  title: "franchise-api"
+host: "erguzv95yh.execute-api.us-east-1.amazonaws.com"
+basePath: "/prod"
+schemes:
+  - "https"
+paths:
+  /branches:
+    post:
+      summary: "Crear una nueva sucursal para una franquicia"
+      description: >
+        Añade una sucursal vinculada a una franquicia existente.
+        Se requiere franquiciaId para asociar la sucursal correctamente.
+      parameters:
+        - name: "branch"
+          in: "body"
+          description: "Datos para crear la sucursal"
+          required: true
+          schema:
+            $ref: "#/definitions/CreateBranchDto"
+      responses:
+        201:
+          description: "Sucursal creada exitosamente"
+          schema:
+            $ref: "#/definitions/Branch"
+        400:
+          description: "Datos inválidos para crear la sucursal"
+
+  /branches/{branchId}/products:
+    get:
+      summary: "Obtener todos los productos de una sucursal"
+      description: "Devuelve el listado completo de productos disponibles en la sucursal indicada."
+      parameters:
+        - name: "branchId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la sucursal"
+      responses:
+        200:
+          description: "Lista de productos en la sucursal"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ProductInBranch"
+        404:
+          description: "Sucursal no encontrada"
+
+    post:
+      summary: "Agregar un nuevo producto a una sucursal"
+      description: "Permite crear un producto vinculado a la sucursal especificada."
+      parameters:
+        - name: "branchId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la sucursal"
+        - name: "product"
+          in: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/AddProductToBranchDto"
+      responses:
+        201:
+          description: "Producto agregado exitosamente"
+          schema:
+            $ref: "#/definitions/ProductInBranch"
+        400:
+          description: "Datos inválidos para agregar producto"
+        404:
+          description: "Sucursal no encontrada"
+
+  /branches/{branchId}/products/{productId}:
+    delete:
+      summary: "Eliminar un producto de una sucursal"
+      description: "Borra el producto identificado dentro de la sucursal especificada."
+      parameters:
+        - name: "branchId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la sucursal"
+        - name: "productId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico del producto"
+      responses:
+        200:
+          description: "Producto eliminado exitosamente"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Product deleted successfully"
+        404:
+          description: "Sucursal o producto no encontrados"
+
+  /branches/{branchId}/products/{productId}/stock:
+    put:
+      summary: "Actualizar el stock de un producto en una sucursal"
+      description: "Modifica la cantidad disponible del producto en la sucursal correspondiente."
+      parameters:
+        - name: "branchId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la sucursal"
+        - name: "productId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico del producto"
+        - name: "stockUpdate"
+          in: "body"
+          required: true
+          description: "Nuevo valor de stock"
+          schema:
+            $ref: "#/definitions/UpdateStockDto"
+      responses:
+        200:
+          description: "Stock actualizado exitosamente"
+          schema:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Product update successfully"
+        400:
+          description: "Valor de stock inválido"
+        404:
+          description: "Sucursal o producto no encontrados"
+
+  /franchises:
+    post:
+      summary: "Crear una nueva franquicia"
+      description: "Registra una nueva franquicia con nombre, email y opcionalmente dirección y teléfono."
+      parameters:
+        - name: "franchise"
+          in: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/CreateFranchiseDto"
+      responses:
+        200:
+          description: "Franquicia creada exitosamente"
+          schema:
+            type: "object"
+            properties:
+              statusCode:
+                type: "integer"
+                example: 200
+              status:
+                type: "string"
+                example: "success"
+              message:
+                type: "string"
+                example: "Franchise created successfully"
+              data:
+                type: "object"
+                properties:
+                  name:
+                    type: "string"
+                    example: "final1"
+                  address:
+                    type: "string"
+                    example: ""
+                  phone:
+                    type: "string"
+                    example: ""
+                  email:
+                    type: "string"
+                    example: "final@gmail.com"
+        400:
+          description: "Datos inválidos para crear franquicia"
+
+  /franchises/{franchiseId}/branches:
+    post:
+      summary: "Agregar una sucursal a una franquicia existente"
+      description: "Permite añadir una nueva sucursal vinculada a la franquicia indicada."
+      parameters:
+        - name: "franchiseId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la franquicia"
+        - name: "branch"
+          in: "body"
+          required: true
+          schema:
+            $ref: "#/definitions/CreateBranchDto"
+      responses:
+        201:
+          description: "Sucursal creada y vinculada a la franquicia"
+          schema:
+            $ref: "#/definitions/Branch"
+        400:
+          description: "Datos inválidos para crear sucursal"
+        404:
+          description: "Franquicia no encontrada"
+
+  /franchises/{franchiseId}/products/highest-stock-per-branch:
+    get:
+      summary: "Obtener producto con mayor stock por sucursal en una franquicia"
+      description: "Devuelve por cada sucursal el producto que tiene la mayor cantidad en stock."
+      parameters:
+        - name: "franchiseId"
+          in: "path"
+          required: true
+          type: "integer"
+          format: "int64"
+          description: "ID numérico de la franquicia"
+      responses:
+        200:
+          description: "Productos con mayor stock por sucursal"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/HighestStockPerBranch"
+        404:
+          description: "Franquicia no encontrada"
+
+definitions:
+  CreateBranchDto:
+    type: "object"
+    required:
+      - franchiseId
+      - name
+      - address
+      - phone
+    properties:
+      franchiseId:
+        type: "integer"
+        format: "int64"
+        description: "ID numérico de la franquicia a la que pertenece esta sucursal"
+        example: 1
+      name:
+        type: "string"
+        description: "Nombre de la sucursal"
+        example: "Sucursal Centro"
+      address:
+        type: "string"
+        description: "Dirección física de la sucursal"
+        example: "Av. Siempre Viva 742"
+      phone:
+        type: "string"
+        description: "Teléfono de contacto de la sucursal"
+        example: "+5215512345678"
+
+  AddProductToBranchDto:
+    type: "object"
+    required:
+      - branchId
+      - name
+      - price
+      - stock
+    properties:
+      branchId:
+        type: "integer"
+        format: "int64"
+        description: "ID numérico de la sucursal donde se agrega el producto"
+        example: 1
+      name:
+        type: "string"
+        description: "Nombre del producto"
+        example: "Botox Premium"
+      price:
+        type: "number"
+        format: "float"
+        description: "Precio unitario del producto"
+        example: 120.5
+      description:
+        type: "string"
+        description: "Descripción opcional del producto"
+        example: "Tratamiento de botox para rejuvenecimiento facial"
+      stock:
+        type: "integer"
+        description: "Cantidad inicial en inventario del producto"
+        example: 30
+
+  ProductInBranch:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 6
+      branch_id:
+        type: "integer"
+        format: "int64"
+        example: 1
+      name:
+        type: "string"
+        example: "Laptop"
+      description:
+        type: "string"
+        example: "El mejor producto"
+      price:
+        type: "string"
+        example: "2.13"
+      created_at:
+        type: "string"
+        format: "date-time"
+        example: "2025-06-04T04:03:40.000Z"
+      updated_at:
+        type: "string"
+        format: "date-time"
+        example: "2025-06-04T06:19:41.000Z"
+      stock:
+        type: "integer"
+        example: 7
+
+  UpdateStockDto:
+    type: "object"
+    required:
+      - stock
+    properties:
+      stock:
+        type: "integer"
+        description: "Cantidad actualizada de stock (no negativa)"
+        example: 15
+
+  Branch:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+      name:
+        type: "string"
+        example: "Sucursal Centro"
+      address:
+        type: "string"
+        example: "Av. Siempre Viva 742"
+      phone:
+        type: "string"
+        example: "+5215512345678"
+
+  Franchise:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        example: "franchise-001"
+      name:
+        type: "string"
+        example: "BeautyCare Franchise"
+      address:
+        type: "string"
+        example: "Av. Insurgentes 123"
+      phone:
+        type: "string"
+        example: "+5215588776655"
+      email:
+        type: "string"
+        example: "contacto@beautycare.com"
+      created_at:
+        type: "string"
+        format: "date-time"
+        example: "2025-01-15T12:34:56Z"
+      updated_at:
+        type: "string"
+        format: "date-time"
+        example: "2025-05-01T08:21:00Z"
+
+  CreateFranchiseDto:
+    type: "object"
+    required:
+      - name
+      - email
+    properties:
+      name:
+        type: "string"
+        minLength: 3
+        description: "Nombre de la franquicia"
+        example: "BeautyCare Franchise"
+      address:
+        type: "string"
+        description: "Dirección física de la franquicia (opcional)"
+        example: "Av. Insurgentes 123"
+      phone:
+        type: "string"
+        description: "Teléfono de contacto (opcional)"
+        example: "+5215588776655"
+      email:
+        type: "string"
+        format: "email"
+        description: "Correo electrónico válido"
+        example: "contacto@beautycare.com"
+
+  HighestStockPerBranch:
+    type: "object"
+    properties:
+      branchId:
+        type: "integer"
+        example: 1
+      branchName:
+        type: "string"
+        example: "Sucursal Centro"
+      branchAddress:
+        type: "string"
+        example: "Av. Siempre Viva 742"
+      branchPhone:
+        type: "string"
+        example: "+5215512345678"
+      product:
+        type: "object"
+        properties:
+          productId:
+            type: "integer"
+            example: 6
+          productName:
+            type: "string"
+            example: "Laptop"
+          stock:
+            type: "integer"
+            example: 7
+          price:
+            type: "string"
+            example: "2.13"

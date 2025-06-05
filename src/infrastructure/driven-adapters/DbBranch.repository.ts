@@ -1,11 +1,15 @@
 import { Pool } from "mysql2/promise";
 import { Product } from "../../domain/entities/product";
 import { BranchRepository } from "../../domain/repositories/branch.repository";
+import { NotFoundError } from "../../application/response/responseHandler";
 
 export class DbBranchRepository implements BranchRepository {
   constructor(private pool: Pool) {}
 
-  async addProductToBranch(branchId: number, product: Product): Promise<void> {
+  async addProductToBranch(
+    branchId: number,
+    product: Product
+  ): Promise<Product> {
     const connection = await this.pool.getConnection();
 
     try {
@@ -18,7 +22,7 @@ export class DbBranchRepository implements BranchRepository {
       );
 
       if ((branchRows as any[]).length === 0) {
-        throw new Error(`Branch with ID ${branchId} does not exist`);
+        throw new NotFoundError(`Branch with ID ${branchId} does not exist`);
       }
 
       // Verificar si ya existe el producto con ese nombre en esa sucursal
@@ -28,7 +32,7 @@ export class DbBranchRepository implements BranchRepository {
       );
 
       if ((productRows as any[]).length > 0) {
-        throw new Error(
+        throw new NotFoundError(
           `Product "${product.name}" already exists in branch ${branchId}`
         );
       }
@@ -47,6 +51,7 @@ export class DbBranchRepository implements BranchRepository {
       );
 
       await connection.commit();
+      return product;
     } catch (err) {
       await connection.rollback();
       console.error("Error adding product to branch:", err);
@@ -71,7 +76,7 @@ export class DbBranchRepository implements BranchRepository {
       );
 
       if ((rows as any[]).length === 0) {
-        throw new Error("Product not found in specified branch");
+        throw new NotFoundError("Product not found in specified branch");
       }
 
       // Eliminar producto (o puedes hacer soft delete si quieres)
@@ -89,12 +94,23 @@ export class DbBranchRepository implements BranchRepository {
   async allProductsToBranch(branchId: number): Promise<Product[]> {
     const connection = await this.pool.getConnection();
     try {
+      const [branchRows] = await connection.query(
+        "SELECT id FROM branches WHERE id = ? LIMIT 1",
+        [branchId]
+      );
+
+      if ((branchRows as any[]).length === 0) {
+        throw new NotFoundError(`Branch with ID ${branchId} does not exist`);
+      }
       const [rows] = await connection.query(
         "SELECT * FROM products WHERE branch_id = ?",
         [branchId]
       );
+      console.log("allProductsToBranch", rows);
+
       return rows as Product[];
     } catch (err) {
+      console.log("allProductsToBranch err", err);
       throw err;
     } finally {
       connection.release();

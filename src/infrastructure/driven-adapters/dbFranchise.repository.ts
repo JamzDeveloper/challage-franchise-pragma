@@ -2,6 +2,7 @@ import mysql, { RowDataPacket } from "mysql2/promise";
 import { Branch } from "../../domain/entities/branch";
 import { Franchise } from "../../domain/entities/franchise";
 import { FranchiseRepository } from "../../domain/repositories/franchise.repository";
+import { NotFoundError } from "../../application/response/responseHandler";
 
 const store = new Map<string, Franchise>();
 
@@ -35,7 +36,7 @@ export class DbFranchiseRepository implements FranchiseRepository {
     return store.get(id) ?? null;
   }
 
-  async addBranch(franchiseId: number, branch: Branch): Promise<void> {
+  async addBranch(franchiseId: number, branch: Branch): Promise<Branch> {
     // Validar que exista la franquicia
     const [franchiseRows] = await this.pool.query<RowDataPacket[]>(
       `SELECT id FROM franchises WHERE id = ?`,
@@ -43,7 +44,7 @@ export class DbFranchiseRepository implements FranchiseRepository {
     );
 
     if (franchiseRows.length === 0) {
-      throw new Error(`Franchise with ID ${franchiseId} not found.`);
+      throw new NotFoundError(`Franchise with ID ${franchiseId} not found.`);
     }
 
     // Insertar la sucursal
@@ -58,6 +59,8 @@ export class DbFranchiseRepository implements FranchiseRepository {
       branch.address,
       branch.phone,
     ]);
+
+    return { ...branch };
   }
 
   async find(): Promise<Array<Franchise>> {
@@ -74,7 +77,7 @@ export class DbFranchiseRepository implements FranchiseRepository {
     );
 
     if (franchiseRows.length === 0) {
-      throw new Error(`Franchise with ID ${franchiseId} not found.`);
+      throw new NotFoundError(`Franchise with ID ${franchiseId} not found.`);
     }
 
     const query = `

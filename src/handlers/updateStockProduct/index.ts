@@ -2,6 +2,11 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { pool } from "../../infrastructure/db/mysql-connection";
 import { UpdateStockProductFromBranchUseCase } from "../../application/use-cases/updateStockProduct";
 import { DbProductRepository } from "../../infrastructure/driven-adapters/dbProduct.repostory";
+import {
+  ResponseHandler,
+  ValidationError,
+} from "../../application/response/responseHandler";
+import { updateProductSchema } from "./validateUpdateDto";
 
 const productRepository = new DbProductRepository(pool);
 const updateStockProductUseCase = new UpdateStockProductFromBranchUseCase(
@@ -16,25 +21,24 @@ export const handler = async (
 
     const branchId = Number(event.pathParameters?.branchId);
     const productId = Number(event.pathParameters?.productId);
-    const { stock } = JSON.parse(event.body || "{}");
-    if (!branchId || !productId || !stock || isNaN(stock)) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ message: "Missing branchId or productId or stock" }),
-      };
+    const body =
+      typeof event.body === "string" ? JSON.parse(event.body) : event.body;
+
+    const { stock } = updateProductSchema.parse(body);
+    if (!branchId || !productId) {
+      return ResponseHandler.formatError(
+        new ValidationError("Missing branchId or productId")
+      );
     }
 
-    await updateStockProductUseCase.execute(branchId, productId,stock);
+    await updateStockProductUseCase.execute(branchId, productId, stock);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Product update successfully" }),
-    };
-  } catch (err: any) {
-    console.error("Error updated product", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Internal server error" }),
-    };
+    // return {
+    //   statusCode: 200,
+    //   body: JSON.stringify({ message: "Product update successfully" }),
+    // };
+    return ResponseHandler.formatSuccess(null, "Product update successfully");
+  } catch (error) {
+    return ResponseHandler.formatError(error);
   }
 };

@@ -11,7 +11,7 @@ interface CreateBranchInput {
 export class AddBranchUseCase {
   constructor(private franchiseRepo: FranchiseRepository) {}
 
-  async execute(franchiseId: number, branch: CreateBranchInput): Promise<void> {
+  async execute(franchiseId: number, branch: CreateBranchInput): Promise<Branch> {
     return this.franchiseRepo.addBranch(franchiseId, branch);
   }
 }

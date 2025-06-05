@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DbFranchiseRepository = void 0;
+const responseHandler_1 = require("../../application/response/responseHandler");
 const store = new Map();
 class DbFranchiseRepository {
     constructor(pool) {
@@ -32,7 +33,7 @@ class DbFranchiseRepository {
         // Validar que exista la franquicia
         const [franchiseRows] = await this.pool.query(`SELECT id FROM franchises WHERE id = ?`, [franchiseId]);
         if (franchiseRows.length === 0) {
-            throw new Error(`Franchise with ID ${franchiseId} not found.`);
+            throw new responseHandler_1.NotFoundError(`Franchise with ID ${franchiseId} not found.`);
         }
         // Insertar la sucursal
         const query = `
@@ -45,6 +46,7 @@ class DbFranchiseRepository {
             branch.address,
             branch.phone,
         ]);
+        return { ...branch };
     }
     async find() {
         const query = `SELECT * FROM franchises`;
@@ -54,7 +56,7 @@ class DbFranchiseRepository {
     async getTopStockProductsPerBranch(franchiseId) {
         const [franchiseRows] = await this.pool.query(`SELECT id FROM franchises WHERE id = ?`, [franchiseId]);
         if (franchiseRows.length === 0) {
-            throw new Error(`Franchise with ID ${franchiseId} not found.`);
+            throw new responseHandler_1.NotFoundError(`Franchise with ID ${franchiseId} not found.`);
         }
         const query = `
     SELECT 

@@ -5,6 +5,7 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { DbFranchiseRepository } from "../../infrastructure/driven-adapters/dbFranchise.repository.js";
 import { pool } from "../../infrastructure/db/mysql-connection.js";
 import { AllFranchisesUseCase } from "../../application/use-cases/allFranchises.js";
+import { ResponseHandler } from "../../application/response/responseHandler.js";
 
 const franchiseRepo = new DbFranchiseRepository(pool);
 const allFranchisesUseCase = new AllFranchisesUseCase(franchiseRepo);
@@ -16,18 +17,12 @@ export const handler = async (
     const body =
       typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
-    const franchise = await allFranchisesUseCase.execute();
+    const franchises = await allFranchisesUseCase.execute();
 
-    console.log("franchise 24", franchise);
-    return {
-      statusCode: 201,
-      body: JSON.stringify(franchise),
-    };
+    console.log("franchise 24", franchises);
+
+    return ResponseHandler.formatSuccess(franchises);
   } catch (err: any) {
-    console.error("Error creating franchise", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Internal server error" }),
-    };
+    return ResponseHandler.formatError(err);
   }
 };

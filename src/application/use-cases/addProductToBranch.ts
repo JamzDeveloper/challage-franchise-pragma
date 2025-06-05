@@ -1,14 +1,15 @@
 import { Product } from "../../domain/entities/product";
 import { BranchRepository } from "../../domain/repositories/branch.repository";
+import { ValidationError } from "../response/responseHandler";
 
 export class AddProductToBranchUseCase {
   constructor(private branchRepository: BranchRepository) {}
 
-  async execute(branchId: number, product: Product): Promise<void> {
+  async execute(branchId: number, product: Product): Promise<Product> {
     if (product.stock < 0) {
-      throw new Error("Stock cannot be negative");
+      throw new ValidationError("Stock cannot be negative");
     }
 
-    await this.branchRepository.addProductToBranch(branchId, product);
+    return await this.branchRepository.addProductToBranch(branchId, product);
   }
 }

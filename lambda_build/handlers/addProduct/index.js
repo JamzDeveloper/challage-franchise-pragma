@@ -6,6 +6,7 @@ const mysql_connection_js_1 = require("../../infrastructure/db/mysql-connection.
 const validateAddProductDto_js_1 = require("./validateAddProductDto.js");
 const addProductToBranch_1 = require("../../application/use-cases/addProductToBranch");
 const dbBranch_repository_1 = require("../../infrastructure/driven-adapters/dbBranch.repository");
+const responseHandler_js_1 = require("../../application/response/responseHandler.js");
 const branchRepo = new dbBranch_repository_1.DbBranchRepository(mysql_connection_js_1.pool);
 const addBranchUseCase = new addProductToBranch_1.AddProductToBranchUseCase(branchRepo);
 const handler = async (event) => {
@@ -13,20 +14,17 @@ const handler = async (event) => {
         const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
         const validated = validateAddProductDto_js_1.addProductToBranchSchema.parse(body);
         const { branchId, ...rest } = validated;
-        await addBranchUseCase.execute(validated.branchId, {
+        const product = await addBranchUseCase.execute(validated.branchId, {
             ...rest,
         });
-        return {
-            statusCode: 201,
-            body: JSON.stringify({ message: "Product added successfully" }),
-        };
+        // return {
+        //   statusCode: 201,
+        //   body: JSON.stringify({ message: "Product added successfully" }),
+        // };
+        return responseHandler_js_1.ResponseHandler.formatSuccess(product, "Product created successfully");
     }
     catch (err) {
-        console.error("Error adding branch", err);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: "Internal server error" }),
-        };
+        return responseHandler_js_1.ResponseHandler.formatError(err);
     }
 };
 exports.handler = handler;

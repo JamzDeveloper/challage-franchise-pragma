@@ -1,6 +1,7 @@
 import mysql, { RowDataPacket } from "mysql2/promise";
 import { Product } from "../../domain/entities/product";
 import { ProductRepository } from "../../domain/repositories/update.repository";
+import { NotFoundError } from "../../application/response/responseHandler";
 
 export class DbProductRepository implements ProductRepository {
   private pool: mysql.Pool;
@@ -42,7 +43,7 @@ export class DbProductRepository implements ProductRepository {
       ]);
 
       if (rows.length === 0) {
-        throw new Error("Producto no encontrado en la sucursal.");
+        throw new NotFoundError("Producto no encontrado en la sucursal.");
       }
 
       const row = rows[0];

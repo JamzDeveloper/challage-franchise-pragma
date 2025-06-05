@@ -1,8 +1,8 @@
-
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { pool } from "../../infrastructure/db/mysql-connection.js";
 import { AllProductsToBranch } from "../../application/use-cases/allProductsToBranch";
 import { DbBranchRepository } from "../../infrastructure/driven-adapters/dbBranch.repository";
+import { ResponseHandler } from "../../application/response/responseHandler.js";
 
 const branchRepository = new DbBranchRepository(pool);
 const allProductsUseCase = new AllProductsToBranch(branchRepository);
@@ -15,16 +15,9 @@ export const handler = async (
 
     const products = await allProductsUseCase.execute(branchId);
 
-    console.log("products 24", products);
-    return {
-      statusCode: 201,
-      body: JSON.stringify(products),
-    };
+    console.log("result allProductToBranch", products);
+    return ResponseHandler.formatSuccess(products);
   } catch (err: any) {
-    console.error("Error list products", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Internal server error" }),
-    };
+    return ResponseHandler.formatError(err);
   }
 };

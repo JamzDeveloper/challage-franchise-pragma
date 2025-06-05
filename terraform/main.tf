@@ -185,6 +185,29 @@ resource "aws_lambda_function" "delete_product_to_branch" {
 }
 
 
+
+# Lambda function all franchises resource
+
+resource "aws_lambda_function" "highest_stock_branch_lambda" {
+  function_name = "highest_stock_per_branch_lambda"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "handlers/highestStockBranch/index.handler" 
+  runtime       = "nodejs20.x"
+  timeout       = 10
+
+  filename         = data.archive_file.lambda_zip_file.output_path
+  source_code_hash = data.archive_file.lambda_zip_file.output_base64sha256
+
+  environment {
+    variables = {
+      DB_HOST     = var.db_host
+      DB_USERNAME = var.db_username
+      DB_PASSWORD = var.db_password
+      DB_NAME     = var.db_name
+    }
+  }
+}
+
 ##
 # REST API Gateway
 resource "aws_api_gateway_rest_api" "franchise_api" {
@@ -443,6 +466,51 @@ resource "aws_lambda_permission" "allow_apigw_update_stock_to_branch" {
 }
 
 
+# Crear Recurso  /franchises/{franchiseId}/products/
+
+resource "aws_api_gateway_resource" "franchise_products"{
+  rest_api_id = aws_api_gateway_rest_api.franchise_api.id
+  parent_id   = aws_api_gateway_resource.franchise_id.id
+  path_part   = "products"
+}
+
+# Crear Recurso  /franchises/{franchiseId}/products/highest-stock-per-branch
+resource "aws_api_gateway_resource" "franchise_products_highest_stock_branch_route"{
+  rest_api_id = aws_api_gateway_rest_api.franchise_api.id
+  parent_id   = aws_api_gateway_resource.franchise_products.id
+  path_part   = "highest-stock-per-branch"
+}
+
+
+# Método GET para  /franchises/{franchiseId}/products/highest-stock-per-branch
+resource "aws_api_gateway_method" "franchises_products_highest_stock_branch_lambda" {
+  rest_api_id   = aws_api_gateway_rest_api.franchise_api.id
+  resource_id   = aws_api_gateway_resource.franchise_products_highest_stock_branch_route.id
+  http_method   = "GET"
+  authorization = "NONE"
+  request_parameters = {
+  "method.request.path.franchiseId" = true
+}
+}
+
+# Integración Lambda para  GET para  /franchises/{franchiseId}/products/highest-stock-per-branch
+resource "aws_api_gateway_integration" "franchises_products_highest_stock_branch_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.franchise_api.id
+  resource_id             = aws_api_gateway_resource.franchise_products_highest_stock_branch_route.id
+  http_method             = aws_api_gateway_method.franchises_products_highest_stock_branch_lambda.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.highest_stock_branch_lambda.invoke_arn
+}
+
+# Permiso Lambda para API Gateway
+resource "aws_lambda_permission" "allow_apigw_franchises_products_permission" {
+ statement_id  = "AllowAPIGatewayInvokeHighestStockPerBranch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.highest_stock_branch_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.franchise_api.execution_arn}/*/*"
+  }
 
 # Deployment and stage
 resource "aws_api_gateway_deployment" "deployment" {
@@ -467,7 +535,11 @@ resource "aws_api_gateway_deployment" "deployment" {
   aws_api_gateway_integration.lambda_get_branch_product,
 
   aws_api_gateway_method.put_branch_product_stock,
-  aws_api_gateway_integration.lambda_put_branch_product_stock
+  aws_api_gateway_integration.lambda_put_branch_product_stock,
+
+
+  aws_api_gateway_method.franchises_products_highest_stock_branch_lambda,
+  aws_api_gateway_integration.franchises_products_highest_stock_branch_integration
 
   ]
 
@@ -483,6 +555,8 @@ resource "aws_api_gateway_deployment" "deployment" {
         aws_api_gateway_method.delete_branch_product.http_method,
         aws_api_gateway_method.get_branch_product.http_method,
         aws_api_gateway_method.put_branch_product_stock.http_method,
+        aws_api_gateway_method.franchises_products_highest_stock_branch_lambda.http_method
+
       ],
       # integrations = [
       #   aws_api_gateway_integration.lambda_post_franchises.id,

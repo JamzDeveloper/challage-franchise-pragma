@@ -66,4 +66,59 @@ export class DbFranchiseRepository implements FranchiseRepository {
 
     return rows as Franchise[];
   }
+
+  async getTopStockProductsPerBranch(franchiseId: number): Promise<any[]> {
+    const [franchiseRows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT id FROM franchises WHERE id = ?`,
+      [franchiseId]
+    );
+
+    if (franchiseRows.length === 0) {
+      throw new Error(`Franchise with ID ${franchiseId} not found.`);
+    }
+
+    const query = `
+    SELECT 
+      b.id AS branchId,
+      b.name AS branchName,
+      b.address as branchAddress,
+      b.phone as branchPhone,
+      p.id AS productId,
+      p.name AS productName,
+      p.stock,
+      p.price
+    FROM branches b
+    JOIN (
+        SELECT 
+            branch_id,
+            id,
+            name,
+            stock,
+            price
+        FROM products p1
+        WHERE NOT EXISTS (
+            SELECT 1 
+            FROM products p2 
+            WHERE p2.branch_id = p1.branch_id 
+            AND p2.stock > p1.stock
+        )
+    ) p ON p.branch_id = b.id
+    WHERE b.franchise_id = ?
+  `;
+
+    const [rows] = await this.pool.query<RowDataPacket[]>(query, [franchiseId]);
+
+    return rows.map((row) => ({
+      branchId: row.branchId,
+      branchName: row.branchName,
+      branchAddress: row.branchAddress,
+      branchPhone: row.branchPhone,
+      product: {
+        productId: row.productId,
+        productName: row.productName,
+        stock: row.stock,
+        price: row.price,
+      },
+    }));
+  }
 }
